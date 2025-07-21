@@ -2,6 +2,8 @@ package ui;
 
 import dao.AttendanceDAO;
 import model.Employee;
+import model.UserRole;
+import util.PositionRoleMapper;
 import model.Attendance;
 import model.Payroll;
 import service.PayrollCalculator;
@@ -42,6 +44,9 @@ public class EmployeeDashboard extends JFrame {
     public EmployeeDashboard(Employee user) {
         this.currentUser = user;
 
+        // Get user role for access control
+        UserRole userRole = PositionRoleMapper.getUserRole(user.getPosition());
+        
         try {
             // Initialize DAOs and services
             this.attendanceDAO = new AttendanceDAO();
@@ -55,8 +60,7 @@ public class EmployeeDashboard extends JFrame {
             // Load initial data
             loadData();
 
-            // Log successful initialization
-            System.out.println("✅ Employee Dashboard initialized successfully for: " + user.getFullName());
+            System.out.println("✅ Employee Dashboard initialized for: " + user.getFullName() + " (Role: " + userRole.getDisplayName() + ")");
 
         } catch (Exception e) {
             // Log the error
@@ -267,6 +271,11 @@ public class EmployeeDashboard extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
 
+        UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+        JLabel roleLabel = new JLabel("Role: " + role.getDisplayName());
+        roleLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        roleLabel.setForeground(Color.LIGHT_GRAY);
+        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(new Color(25, 25, 112));
 
@@ -278,7 +287,12 @@ public class EmployeeDashboard extends JFrame {
 
         buttonPanel.add(logoutButton);
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(new Color(25, 25, 112));
+        titlePanel.add(titleLabel, BorderLayout.NORTH);
+        titlePanel.add(roleLabel, BorderLayout.SOUTH);
+        
+        headerPanel.add(titlePanel, BorderLayout.WEST);
         headerPanel.add(buttonPanel, BorderLayout.EAST);
 
         return headerPanel;
@@ -387,16 +401,27 @@ public class EmployeeDashboard extends JFrame {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         actionPanel.setBorder(BorderFactory.createTitledBorder("Quick Actions"));
 
+        UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+        
         JButton leaveRequestButton = new JButton("Submit Leave Request");
-
         leaveRequestButton.addActionListener(e -> showLeaveRequestDialog());
         leaveRequestButton.setPreferredSize(new Dimension(180, 35));
-        // Style button
         leaveRequestButton.setBackground(new Color(194, 215, 238));
         leaveRequestButton.setForeground(Color.BLACK);
         leaveRequestButton.setFont(new Font("Arial", Font.BOLD, 12));
-
         actionPanel.add(leaveRequestButton);
+        
+        // Add role-specific buttons
+        if (role.canAccessReports()) {
+            JButton reportsButton = new JButton("View Reports");
+            reportsButton.addActionListener(e -> openReportsDialog());
+            reportsButton.setPreferredSize(new Dimension(140, 35));
+            reportsButton.setBackground(new Color(144, 238, 144));
+            reportsButton.setForeground(Color.BLACK);
+            reportsButton.setFont(new Font("Arial", Font.BOLD, 12));
+            actionPanel.add(reportsButton);
+        }
+
 
         return actionPanel;
     }
@@ -408,6 +433,16 @@ public class EmployeeDashboard extends JFrame {
             loadAttendanceData(); // Refresh attendance data after potential leave submission
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error opening leave request dialog: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void openReportsDialog() {
+        try {
+            ui.ReportsDialog dialog = new ui.ReportsDialog(this, currentUser);
+            dialog.setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error opening reports: " + e.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -644,7 +679,7 @@ public class EmployeeDashboard extends JFrame {
             testUser.setEmployeeId(10001);
             testUser.setFirstName("Test");
             testUser.setLastName("Employee");
-            testUser.setPosition("Software Developer");
+            testUser.setPosition("account rank and file");
             testUser.setStatus("Regular");
             testUser.setBasicSalary(50000.0);
             testUser.setRiceSubsidy(1500.0);

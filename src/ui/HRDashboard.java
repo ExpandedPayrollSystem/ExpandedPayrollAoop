@@ -3,6 +3,8 @@ package ui;
 import dao.EmployeeDAO;
 import dao.AttendanceDAO;
 import model.Employee;
+import model.UserRole;
+import util.PositionRoleMapper;
 import model.Attendance;
 import model.Payroll;
 import service.PayrollCalculator;
@@ -73,6 +75,9 @@ public class HRDashboard extends JFrame {
     public HRDashboard(Employee user) {
         this.currentUser = user;
 
+        // Get user role for access control
+        UserRole userRole = PositionRoleMapper.getUserRole(user.getPosition());
+        
         try {
             // Set modern look and feel - use default to avoid compatibility issues
             // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel()); // Commented out to avoid errors
@@ -87,7 +92,7 @@ public class HRDashboard extends JFrame {
             startRealTimeUpdates();
             loadData();
 
-            System.out.println("✅ Comprehensive HR Dashboard initialized for: " + user.getFullName());
+            System.out.println("✅ HR Dashboard initialized for: " + user.getFullName() + " (Role: " + userRole.getDisplayName() + ")");
 
         } catch (Exception e) {
             System.err.println("❌ HR Dashboard initialization failed: " + e.getMessage());
@@ -260,7 +265,8 @@ public class HRDashboard extends JFrame {
         userNameLabel.setForeground(Color.WHITE);
         userNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel userRoleLabel = new JLabel(currentUser.getPosition());
+        UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+        JLabel userRoleLabel = new JLabel(currentUser.getPosition() + " (" + role.getDisplayName() + ")");
         userRoleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         userRoleLabel.setForeground(new Color(156, 163, 175));
         userRoleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -281,22 +287,35 @@ public class HRDashboard extends JFrame {
         // Navigation buttons
         JButton dashboardBtn = createSidebarButton("📊 Dashboard", "dashboard", true);
         JButton employeesBtn = createSidebarButton("👥 Employees", "employees", false);
-        JButton payrollBtn = createSidebarButton("💰 Payroll", "payroll", false);
-        JButton attendanceBtn = createSidebarButton("📅 Attendance", "attendance", false);
-        JButton leaveBtn = createSidebarButton("🏖️ Leave Management", "leave", false);
-        JButton reportsBtn = createSidebarButton("📈 Reports", "reports", false);
-
+        
+        // Only show certain buttons based on role
+        UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+        
         navPanel.add(dashboardBtn);
         navPanel.add(Box.createVerticalStrut(5));
         navPanel.add(employeesBtn);
         navPanel.add(Box.createVerticalStrut(5));
-        navPanel.add(payrollBtn);
-        navPanel.add(Box.createVerticalStrut(5));
+        
+        if (role.canAccessPayroll()) {
+            JButton payrollBtn = createSidebarButton("💰 Payroll", "payroll", false);
+            navPanel.add(payrollBtn);
+            navPanel.add(Box.createVerticalStrut(5));
+        }
+        
+        JButton attendanceBtn = createSidebarButton("📅 Attendance", "attendance", false);
+        JButton leaveBtn = createSidebarButton("🏖️ Leave Management", "leave", false);
+        
         navPanel.add(attendanceBtn);
         navPanel.add(Box.createVerticalStrut(5));
         navPanel.add(leaveBtn);
         navPanel.add(Box.createVerticalStrut(5));
-        navPanel.add(reportsBtn);
+        
+        if (role.canAccessReports()) {
+            JButton reportsBtn = createSidebarButton("📈 Reports", "reports", false);
+            navPanel.add(reportsBtn);
+            navPanel.add(Box.createVerticalStrut(5));
+        }
+
 
         // Bottom section with logout
         JPanel bottomPanel = new JPanel();
@@ -761,6 +780,13 @@ public class HRDashboard extends JFrame {
 
     private void showAddEmployeeDialog() {
         try {
+            UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+            if (!role.canManageEmployees()) {
+                JOptionPane.showMessageDialog(this, 
+                        "You don't have permission to add employees.",
+                        "Access Denied", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             EmployeeDetailsDialog dialog = new EmployeeDetailsDialog(this, null, true);
             dialog.setVisible(true);
             loadEmployeeData();
@@ -774,6 +800,13 @@ public class HRDashboard extends JFrame {
 
     private void showEmployeeDetails(Employee employee) {
         try {
+            UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+            if (!role.canAccessHR() && !role.canManageEmployees()) {
+                JOptionPane.showMessageDialog(this, 
+                        "You don't have permission to view employee details.",
+                        "Access Denied", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             EmployeeDetailsDialog dialog = new EmployeeDetailsDialog(this, employee, false);
             dialog.setVisible(true);
             loadEmployeeData();
@@ -787,6 +820,13 @@ public class HRDashboard extends JFrame {
 
     private void openLeaveManagement() {
         try {
+            UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+            if (!role.canApproveLeave()) {
+                JOptionPane.showMessageDialog(this, 
+                        "You don't have permission to access leave management.",
+                        "Access Denied", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             LeaveManagementDialog dialog = new LeaveManagementDialog(this, currentUser);
             dialog.setVisible(true);
         } catch (Exception e) {
@@ -799,6 +839,13 @@ public class HRDashboard extends JFrame {
 
     private void openReportsDialog() {
         try {
+            UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+            if (!role.canAccessReports()) {
+                JOptionPane.showMessageDialog(this, 
+                        "You don't have permission to access reports.",
+                        "Access Denied", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             ReportsDialog dialog = new ReportsDialog(this, currentUser);
             dialog.setVisible(true);
         } catch (Exception e) {
@@ -911,6 +958,14 @@ public class HRDashboard extends JFrame {
     }
 
     private void deleteEmployee(Employee employee) {
+        UserRole role = PositionRoleMapper.getUserRole(currentUser.getPosition());
+        if (!role.canManageEmployees()) {
+            JOptionPane.showMessageDialog(this, 
+                    "You don't have permission to delete employees.",
+                    "Access Denied", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
         int confirm = JOptionPane.showConfirmDialog(this,
                 "<html><center>" +
                 "<h3>⚠️ Confirm Employee Removal</h3>" +
@@ -1085,7 +1140,7 @@ public class HRDashboard extends JFrame {
                 testUser.setEmployeeId(10001);
                 testUser.setFirstName("Andrea");
                 testUser.setLastName("Mae");
-                testUser.setPosition("HR Manager");
+                testUser.setPosition("hr manager");
 
                 HRDashboard dashboard = new HRDashboard(testUser);
                 dashboard.setupComprehensiveEmployeeTable();

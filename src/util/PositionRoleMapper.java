@@ -44,6 +44,16 @@ public class PositionRoleMapper {
         POSITION_ROLE_MAP.put("supply chain and logistics", UserRole.EMPLOYEE);
         POSITION_ROLE_MAP.put("customer service and relations", UserRole.EMPLOYEE);
         
+        // Additional common variations (case insensitive)
+        POSITION_ROLE_MAP.put("ceo", UserRole.CEO);
+        POSITION_ROLE_MAP.put("coo", UserRole.VP);
+        POSITION_ROLE_MAP.put("cfo", UserRole.VP);
+        POSITION_ROLE_MAP.put("cmo", UserRole.VP);
+        POSITION_ROLE_MAP.put("software developer", UserRole.EMPLOYEE);
+        POSITION_ROLE_MAP.put("developer", UserRole.EMPLOYEE);
+        POSITION_ROLE_MAP.put("programmer", UserRole.EMPLOYEE);
+        POSITION_ROLE_MAP.put("analyst", UserRole.EMPLOYEE);
+        
         LOGGER.info("✅ Position-Role mapping initialized with " + POSITION_ROLE_MAP.size() + " mappings");
     }
     
