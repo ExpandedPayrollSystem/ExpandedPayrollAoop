@@ -20,7 +20,7 @@ The MotorPH Payroll System is a comprehensive Java-based desktop application des
 
 #### Employee Management
 - **Complete Employee Records**: Personal information, employment status, position details
-- **Role-Based Access Control**: Separate dashboards for employees and HR personnel
+- **Role-Based Access Control**: Position-based access control with UserRole system
 - **Employee Search & Filtering**: Advanced search capabilities with multiple criteria
 - **Password Management**: Secure credential handling with change password functionality
 
@@ -50,6 +50,7 @@ The MotorPH Payroll System is a comprehensive Java-based desktop application des
 #### Reporting & Analytics
 - **Monthly Payroll Reports**: Comprehensive payroll summaries
 - **Export Options**: CSV and HTML export formats
+- **JasperReports Integration**: Professional PDF generation with MotorPH template
 - **Detailed Attendance Reports**: Attendance summary of all the employees
 - **Government Contributions Reports**: SSS, PhilHealth, and Pag-IBIG reports
 
@@ -142,6 +143,7 @@ The system comes with pre-configured test accounts:
 ## 🚀 Future Enhancements
 
 ### Planned Features
+- **Complete JasperReports Integration**: Full PDF generation with professional templates
 - **Enhanced Reporting System**: 
   - Employee performance dashboards
   - Custom report builder
@@ -152,9 +154,32 @@ The system comes with pre-configured test accounts:
 - **API Integration**: External system integrations
 - **Cloud Deployment**: Cloud-based hosting options
 
+## 🎓 AOOP Compliance
+
+### Object-Oriented Programming Principles Implemented
+1. **Inheritance**: Employee → Manager, HRPersonnel, Contractor classes
+2. **Abstraction**: Person (abstract class), Allowance (abstract class), Deduction (abstract class)
+3. **Polymorphism**: Payable interface, LeaveEligible interface, AttendanceTrackable interface
+4. **Encapsulation**: Proper getters/setters with validation in all model classes
+
+### Database Design
+- **3NF Normalization**: Implemented with separate tables for departments, positions, allowances
+- **Views**: Employee summary, payroll summary, attendance summary views
+- **Stored Procedures**: Payroll calculation, government contributions calculation
+- **Indexes**: Optimized query performance with proper indexing
+
+### Testing Framework
+- **JUnit 5**: Proper unit testing with Assert functions
+- **Test Coverage**: Model, DAO, Service, and UI tests
+- **Mockito Integration**: Proper mocking for isolated tests
+
+### Reporting System
+- **JasperReports Ready**: Infrastructure for professional PDF generation
+- **MotorPH Template**: Company-branded report templates
+- **Multiple Formats**: HTML, CSV, and PDF export options
 
 ## 📄 License
 
 Academic use only. Developed by Group 6, Mapúa Malayan Digital College.
 
-**© 2025 MotorPH Payroll System**  
+**© 2025 MotorPH Payroll System**
